@@ -1,4 +1,4 @@
-using CM = System.Runtime.InteropServices.CollectionsMarshal;
+using System.Runtime.InteropServices;
 
 namespace BestCode4Txt.Models;
 
@@ -17,16 +17,18 @@ internal sealed class CcDict // Trie结构
         foreach (var (word, cc) in entries) {
             var cur = _root;
             foreach (var c in word) {
-                ref var son = ref CM.GetValueRefOrAddDefault(
-                    cur.Sons, c, out var exists); // 避免多次查找
-                if (!exists)
-                    son = new([]);
-                cur = son!;
+                ref var son = ref CollectionsMarshal // 避免多次查找
+                    .GetValueRefOrAddDefault(cur.Sons, c, out var exists);
+                cur = exists
+                    ? son!
+                    : son = new([]);
             }
             if (cur.BestCc is null
                 || cur.BestCc.Value.Cost > cc.Cost)
                 cur.BestCc = cc;
         }
+        if (_root.Sons.Count == 0)
+            throw new ArgumentException("词库条目集为空", nameof(entries));
     }
 
     /// <summary> 更新文本所有起始词的最优CodeCost集 </summary>
