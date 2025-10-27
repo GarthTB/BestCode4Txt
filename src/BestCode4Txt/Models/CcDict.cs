@@ -6,7 +6,7 @@ namespace BestCode4Txt.Models;
 internal sealed class CcDict // Trie结构
 {
     /// <summary> 根节点 </summary>
-    private readonly Node _root = new([]);
+    private readonly Node _root = new(new(4096)); // 假设覆盖常用字
 
     /// <summary> 节点：开销最小的CodeCost和子节点 </summary>
     private sealed record Node(Dictionary<char, Node> Sons)
@@ -17,14 +17,14 @@ internal sealed class CcDict // Trie结构
         foreach (var (word, cc) in entries) {
             var cur = _root;
             foreach (var c in word) {
-                ref var son = ref CollectionsMarshal // 避免多次查找
+                // 避免多次查找
+                ref var son = ref CollectionsMarshal
                     .GetValueRefOrAddDefault(cur.Sons, c, out var exists);
                 cur = exists
                     ? son!
                     : son = new([]);
             }
-            if (cur.BestCc is null
-                || cur.BestCc.Value.Cost > cc.Cost)
+            if (cur.BestCc is null || cur.BestCc.Value.Cost > cc.Cost)
                 cur.BestCc = cc;
         }
         if (_root.Sons.Count == 0)
