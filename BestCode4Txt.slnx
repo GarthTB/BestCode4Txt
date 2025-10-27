@@ -1,3 +1,6 @@
 <Solution>
+  <Folder Name="/README/">
+    <File Path="README.md"/>
+  </Folder>
   <Project Path="src/BestCode4Txt/BestCode4Txt.csproj"/>
 </Solution>
