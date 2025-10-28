@@ -16,12 +16,12 @@ internal sealed record LayoutCfg(
         var text = File.ReadAllText(path);
         var toml = Tomlyn.Toml.ToModel(text);
         return toml["rows"] is TomlArray tRows
-            && Parse(tRows) is { Length: 5 } hRows
+            && Parse(tRows) is { Length: 5 } rows
             && toml["lefts"] is TomlArray tLefts
-            && Parse(tLefts) is { Length: 5 } hLefts
+            && Parse(tLefts) is { Length: 5 } lefts
             && toml["rights"] is TomlArray tRights
-            && Parse(tRights) is { Length: 5 } hRights
-            ? new(hRows, hLefts, hRights)
+            && Parse(tRights) is { Length: 5 } rights
+            ? new(rows, lefts, rights)
             : throw new ArgumentException($"文件 '{path}' 解析失败", nameof(path));
     }
 

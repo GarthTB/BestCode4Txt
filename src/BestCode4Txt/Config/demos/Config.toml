@@ -1,0 +1,22 @@
+# 示例配置：按需修改，然后保存为程序目录下的`Config.toml`，作为输入参数
+
+# 待编码的文本输入路径
+input_path = "Input/TestText.txt"
+
+# 编码及其开销的连接策略：
+# SpaceOrPunct - 空格或标点
+# NoGap - 无间隔
+# Jd6 - 键道6顶功
+link_strat = "SpaceOrPunct"
+
+# 最优编码及其分析报告输出路径（存在则覆写）
+output_path = "Output/TestTextCodeReport.txt"
+
+# 词库（RIME格式）路径
+dict_path = "Cfg/Dict.yaml"
+
+# 键对-开销（当量）路径
+costs_path = "Cfg/Costs.tsv"
+
+# 键盘布局配置路径
+layout_path = "Cfg/Layout.toml"
