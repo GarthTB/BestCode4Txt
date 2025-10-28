@@ -4,7 +4,7 @@ using BestCode4Txt.Models;
 namespace BestCode4Txt.Linker.Impls;
 
 /// <summary> 编码及其开销连接器：空格或标点 </summary>
-/// <param name="costs"> 按键组合开销表 </param>
+/// <param name="costs"> 键对-开销表 </param>
 internal sealed class SpaceOrPunctLinker(CostMap costs): ILinker
 {
     public double Link(StringBuilder code, double cost, CodeCost cc) {

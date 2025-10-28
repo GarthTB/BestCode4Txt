@@ -4,7 +4,7 @@ using BestCode4Txt.Models;
 namespace BestCode4Txt.Linker.Impls;
 
 /// <summary> 编码及其开销连接器：键道6顶功 </summary>
-/// <param name="costs"> 按键组合开销表 </param>
+/// <param name="costs"> 键对-开销表 </param>
 internal sealed class Jd6Linker(CostMap costs): ILinker
 {
     /// <summary> 键道6的形码 </summary>
