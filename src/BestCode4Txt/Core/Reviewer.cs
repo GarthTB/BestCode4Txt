@@ -12,8 +12,7 @@ internal static class Reviewer
     /// <param name="layout"> 键盘布局配置 </param>
     public static string[] Run(CodeCost cc, int textLen, LayoutCfg layout) {
         var (code, cost) = cc;
-        if (code.Length == 0)
-            throw new ArgumentException("文本编码为空", nameof(cc));
+        ArgumentException.ThrowIfNullOrEmpty(code, nameof(cc));
 
         var rowCount = new int[5]; // 各排计数
         var lCount = new int[5]; // 左手各指计数
@@ -46,6 +45,7 @@ internal static class Reviewer
 
         var lSum = lCount.Sum();
         var rSum = rCount.Sum();
+        var bias = 100d * Math.Abs(lSum - rSum) / (lSum + rSum);
         var repeat2 = repeatCount[0] - repeatCount[1];
         var repeat3 = repeatCount[1] - repeatCount[2];
         var repeat4 = repeatCount[2] - repeatCount[3];
@@ -54,11 +54,11 @@ internal static class Reviewer
             "------数据------",
             $"总字数\t{textLen}",
             $"总码数\t{code.Length}",
-            $"总开销\t{cost:0.##}",
+            $"总开销\t{cost:0.####}",
             $"字均码长\t{1d * code.Length / textLen:0.####}",
             $"字均开销\t{cost / textLen:0.####}",
             $"码均开销\t{cost / code.Length:0.####}",
-            $"偏倚\t{100d * Math.Abs(lSum - rSum) / (lSum + rSum):0.####} %",
+            $"偏倚\t{bias:0.####} %",
             "互击\t" + FormatCountNRatio(turnCount, 3),
             "----------------",
             "数字排\t" + FormatCountNRatio(rowCount[0], 1),

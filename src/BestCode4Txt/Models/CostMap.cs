@@ -40,8 +40,7 @@ internal sealed class CostMap
 
     /// <summary> 获取连续编码的总开销 </summary>
     public double GetCost(ReadOnlySpan<char> code) {
-        if (code.Length == 0)
-            throw new ArgumentException("编码为空", nameof(code));
+        ArgumentOutOfRangeException.ThrowIfZero(code.Length, nameof(code));
         var cost = 0d;
         for (var i = 1; i < code.Length; i++)
             cost += this[code[i - 1], code[i]];
