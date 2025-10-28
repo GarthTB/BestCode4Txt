@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+using static System.Runtime.InteropServices.CollectionsMarshal;
 
 namespace BestCode4Txt.Models;
 
@@ -17,9 +17,8 @@ internal sealed class CcDict // Trie结构
         foreach (var (word, cc) in entries) {
             var cur = _root;
             foreach (var c in word) {
-                // 避免多次查找
-                ref var son = ref CollectionsMarshal
-                    .GetValueRefOrAddDefault(cur.Sons, c, out var exists);
+                // 单次查找
+                ref var son = ref GetValueRefOrAddDefault(cur.Sons, c, out var exists);
                 cur = exists
                     ? son!
                     : son = new([]);

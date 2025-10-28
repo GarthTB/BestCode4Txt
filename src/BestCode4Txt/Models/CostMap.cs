@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+using static System.Runtime.InteropServices.CollectionsMarshal;
 
 namespace BestCode4Txt.Models;
 
@@ -19,9 +19,8 @@ internal sealed class CostMap
         var sum = 0d;
         foreach (var (c1, c2, cost) in costs) {
             sum += cost;
-            // 避免多次查找
-            ref var val = ref CollectionsMarshal
-                .GetValueRefOrAddDefault(_costs, (c1, c2), out var exists);
+            // 单次查找
+            ref var val = ref GetValueRefOrAddDefault(_costs, (c1, c2), out var exists);
             val = exists
                 ? throw new ArgumentException($"'{c1}{c2}' 的开销重复", nameof(costs))
                 : cost;
