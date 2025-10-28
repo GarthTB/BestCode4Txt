@@ -6,7 +6,7 @@ namespace BestCode4Txt.Linker;
 /// <summary> 编码及其开销连接器工厂 </summary>
 internal static class LinkerFactory
 {
-    /// <summary> 构造指定策略的CodeCost连接器 </summary>
+    /// <summary> 构造指定策略的编码及其开销连接器 </summary>
     public static ILinker Create(LinkStrat strat, Models.CostMap costs)
         => strat switch {
             LinkStrat.SpaceOrPunct => new SpaceOrPunctLinker(costs),
