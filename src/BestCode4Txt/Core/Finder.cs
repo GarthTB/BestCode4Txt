@@ -29,50 +29,50 @@ internal static class Finder
     private static CodeCost CalcAll(string text, CcDict dict, ILinker linker) {
         // 各位置的最优编码及其开销，初始为null
         var roots = new CodeCost?[text.Length + 1];
-        // 初始化开头
-        roots[0] = new("", 0);
-        // 暂存索引处的root并用于拼接
-        StringBuilder root = new(text.Length * 2); // 设平均码长为2
+        roots[0] = new("", 0); // 开头空串
+        // 最远编码索引
+        var front = 0;
+        // 暂存最优路径以加速拼接
+        StringBuilder route = new(text.Length * 2); // 设平均码长为2
         // 可复用的CodeCost集：索引=词长-1
         List<CodeCost?> ccsByLen = new(text.Length);
 
         for (var i = 0; i < text.Length; i++) {
-            // 取出root，不可能不可达
-            var (code, cost) = roots[i]!.Value;
-            // 初始化root和修补子
-            _ = root.Clear().Append(code);
-            var intactLen = code.Length;
-            var tail = code[^1];
+            // 取出root：一定可达
+            var cc1 = roots[i]!.Value;
 
-            // 获取文本所有起始词的最优CodeCost
+            // 已无其他root：暂存前部，只留2字
+            if (i == front && cc1.Code.Length > 4) {
+                _ = route.Append(cc1.Code, 0, cc1.Code.Length - 2);
+                cc1 = cc1 with { Code = cc1.Code[^2..] };
+            }
+
+            // 获取文本所有起始词的最优CodeCost并更新最优编码
             _ = dict.UpdateCcs(text.AsSpan(i), ccsByLen);
-            if (ccsByLen.Count == 0) { // 词库无词：原字填入
-                CodeCost cc = new(text[i].ToString(), 0);
-                var newCost = linker.Link(root, cost, cc);
-                UpdateMin(i + 1, newCost);
-                HealRoot(intactLen, tail);
-            } else for (var j = 0; j < ccsByLen.Count; j++) {
-                    var cc = ccsByLen[j];
-                    if (cc.HasValue) {
-                        var newCost = linker.Link(root, cost, cc.Value);
-                        UpdateMin(i + j + 1, newCost);
-                        HealRoot(intactLen, tail);
-                    }
+            for (var j = 0; j < ccsByLen.Count; j++) {
+                var cc2 = ccsByLen[j];
+                if (cc2.HasValue) {
+                    var (cost, getCode) = linker.Link(cc1, cc2.Value);
+                    UpdateMin(i + j + 1, cost, getCode);
                 }
+            }
+
+            // 保证可达：原字填入
+            if (!roots[i + 1].HasValue) {
+                CodeCost cc2 = new(text[i].ToString(), 0);
+                var (cost, getCode) = linker.Link(cc1, cc2);
+                UpdateMin(i + 1, cost, getCode);
+            }
         }
-        return roots[^1]!.Value;
+
+        var last = roots[^1]!.Value;
+        return new(route.Append(last.Code).ToString(), last.Cost);
 
         // 更新词尾处的最优编码
-        void UpdateMin(int i, double newCost) {
+        void UpdateMin(int i, double cost, Func<string> getCode) {
             ref var tgt = ref roots[i];
-            if (!tgt.HasValue || tgt.Value.Cost > newCost)
-                tgt = new(root.ToString(), newCost);
-        }
-
-        // 修补root：Link方法会追加，并可能破坏末个字符
-        void HealRoot(int intactLen, char tail) {
-            root.Length = intactLen;
-            _ = root.Append(tail);
+            if (!tgt.HasValue || tgt.Value.Cost > cost)
+                tgt = new(getCode(), cost);
         }
     }
 
