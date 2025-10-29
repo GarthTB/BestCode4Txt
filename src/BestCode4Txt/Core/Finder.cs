@@ -16,7 +16,7 @@ internal sealed class Finder(CcDict dict, ILinker linker)
     private string _text = "";
 
     /// <summary> 各位置的最优编码及其开销，初始为null </summary>
-    private CodeCost?[] _roots = [];
+    private CodeCost?[] _roots = [new()];
 
     /// <summary> 当前索引、最远编码末端索引 </summary>
     private int _curIdx, _maxIdx;
@@ -36,28 +36,33 @@ internal sealed class Finder(CcDict dict, ILinker linker)
         var cnt = textLen = 0;
 
         while ((cnt = reader.Read(buf, 0, CHUNK_CHARS)) > 0) {
-            textLen += cnt;
+            Console.Write($"\r第 {textLen} - {textLen += cnt} 字处理中...");
             // 取出余部
             var restText = _text[_curIdx..];
-            var restRoots = _roots[_curIdx..];
+            var restRoots = _roots[_curIdx..^1];
             var maxLen = _maxIdx - _curIdx;
             // 加载新块
             _text = restText + new string(buf, 0, cnt);
             _roots = [.. restRoots, .. new CodeCost?[cnt + 1]];
             (_curIdx, _maxIdx) = (0, maxLen);
-            // 处理
-            while (ProcCurIdx()) ;
+            // 首个CodeCost
+            if (restRoots.Length == 0)
+                _roots[0] = new("", 0);
+            // 循环处理
+            while (ProcCurIdx(true)) ;
         }
         while (_curIdx < _text.Length)
-            _ = ProcCurIdx();
+            _ = ProcCurIdx(false);
 
+        Console.WriteLine($"\n处理完成，共 {textLen} 字。");
         var last = _roots[^1]!.Value;
         return new(_route.Append(last.Code).ToString(), last.Cost);
     }
 
     /// <summary> 处理当前索引处的编码及其开销 </summary>
+    /// <param name="stopWhenReachEnd"> 是否在到达文本末端时停止 </param>
     /// <returns> 文本是否还有未编码部分 </returns>
-    private bool ProcCurIdx() {
+    private bool ProcCurIdx(bool stopWhenReachEnd) {
         // 取出root：一定可达
         var cc1 = _roots[_curIdx]!.Value;
         // 已无其他root：固化前部，只留2字
@@ -66,7 +71,7 @@ internal sealed class Finder(CcDict dict, ILinker linker)
             cc1 = cc1 with { Code = cc1.Code[^2..] };
         }
         // 获取文本所有起始词的最优CodeCost
-        if (dict.UpdateCcs(_text.AsSpan(_curIdx), _ccsByLen))
+        if (stopWhenReachEnd && !dict.UpdateCcs(_text.AsSpan(_curIdx), _ccsByLen))
             return false;
         // 更新最优CodeCost
         for (var i = 0; i < _ccsByLen.Count; i++) {
@@ -90,7 +95,7 @@ internal sealed class Finder(CcDict dict, ILinker linker)
     private void LinkUpdate(int endIdx, CodeCost cc1, CodeCost cc2) {
         var (cost, getCode) = linker.Link(cc1, cc2);
         ref var tgt = ref _roots[endIdx];
-        if (!(tgt?.Cost > cost)) {
+        if (!(tgt?.Cost <= cost)) {
             tgt = new(getCode(), cost);
             if (endIdx > _maxIdx)
                 _maxIdx = endIdx;

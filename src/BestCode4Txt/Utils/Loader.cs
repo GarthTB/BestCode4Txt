@@ -31,6 +31,7 @@ internal static class Loader
                     _ => ("", "", 0d)
                 };
             })
+            .Where(static x => x.Item1.Length > 0 && x.Item2.Length > 0)
             .OrderByDescending(static x => x.Item3) // 权重降序
             .ThenBy(static x => x.Item2.Length) // 码长升序
             .Select(x => {

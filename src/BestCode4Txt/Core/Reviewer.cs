@@ -10,7 +10,7 @@ internal static class Reviewer
     /// <param name="cc"> 文本编码及其开销 </param>
     /// <param name="textLen"> 文本字数 </param>
     /// <param name="layout"> 键盘布局配置 </param>
-    public static string[] Run(CodeCost cc, int textLen, LayoutCfg layout) {
+    public static List<string> Run(CodeCost cc, int textLen, LayoutCfg layout) {
         var (code, cost) = cc;
         ArgumentException.ThrowIfNullOrEmpty(code, nameof(cc));
 
