@@ -5,34 +5,23 @@ using BestCode4Txt.Models;
 namespace BestCode4Txt.Core;
 
 /// <summary> 最优编码查找器 </summary>
-internal static class Finder
+/// <param name="dict"> 词库：词的最优编码及其开销 </param>
+/// <param name="linker"> 连接器：用于连接编码及其开销 </param>
+internal sealed class Finder(CcDict dict, ILinker linker)
 {
     /// <summary> 计算最优编码及其开销 </summary>
     /// <param name="path"> 待编码的文本文件路径 </param>
-    /// <param name="dict"> 词库：词的最优编码及其开销 </param>
-    /// <param name="linker"> 连接器：用于连接编码及其开销 </param>
     /// <param name="textLen"> 文本字数 </param>
-    public static CodeCost Run(
-        string path, CcDict dict, ILinker linker, out int textLen) {
-        FileInfo fi = new(path);
-        if (fi.Length < 1 << 24) {
-            var text = File.ReadAllText(path);
-            return (textLen = text.Length) == 0
-                ? throw new ArgumentException("待编码的文本为空", nameof(path))
-                : CalcAll(text, dict, linker);
-        } else return CalcChunks(path, dict, linker, out textLen);
-    }
+    public CodeCost Run(string path, out int textLen) {
+        var text = File.ReadAllText(path);
+        textLen = text.Length;
 
-    /// <summary> 一次性计算最优编码及其开销 </summary>
-    /// <param name="dict"> 词库：词的最优编码及其开销 </param>
-    /// <param name="linker"> 连接器：用于连接编码及其开销 </param>
-    private static CodeCost CalcAll(string text, CcDict dict, ILinker linker) {
         // 各位置的最优编码及其开销，初始为null
         var roots = new CodeCost?[text.Length + 1];
         roots[0] = new("", 0); // 开头空串
         // 最远编码末端索引
         var furthest = 0;
-        // 暂存最优路径以加速拼接
+        // 固化最优路径以加速拼接
         StringBuilder route = new(text.Length * 2); // 设平均码长为2
         // 可复用的CodeCost集：索引=词长-1
         List<CodeCost?> ccsByLen = new(text.Length);
@@ -41,8 +30,8 @@ internal static class Finder
             // 取出root：一定可达
             var cc1 = roots[i]!.Value;
 
-            // 已无其他root：暂存前部，只留2字
-            if (i == furthest && cc1.Code.Length > 4) {
+            // 已无其他root：固化前部，只留2字
+            if (i == furthest && cc1.Code.Length > 3) {
                 _ = route.Append(cc1.Code, 0, cc1.Code.Length - 2);
                 cc1 = cc1 with { Code = cc1.Code[^2..] };
             }
@@ -57,7 +46,7 @@ internal static class Finder
                 }
             }
 
-            // 保证可达：原字填入
+            // 兜底：原字填入
             if (!roots[i + 1].HasValue) {
                 CodeCost cc2 = new(text[i].ToString(), 0);
                 var (cost, getCode) = linker.Link(cc1, cc2);
@@ -76,14 +65,5 @@ internal static class Finder
             if (i > furthest)
                 furthest = i;
         }
-    }
-
-    /// <summary> 分块计算最优编码及其开销 </summary>
-    /// <param name="path"> 待编码的文本文件路径 </param>
-    /// <param name="dict"> 词库：词的最优编码及其开销 </param>
-    /// <param name="linker"> 连接器：用于连接编码及其开销 </param>
-    /// <param name="textLen"> 文本字数 </param>
-    private static CodeCost CalcChunks(
-        string path, CcDict dict, ILinker linker, out int textLen) {
     }
 }
