@@ -22,7 +22,7 @@ internal sealed class CcDict // Trie结构
                     ? son!
                     : son = new([]);
             }
-            if (!cur.BestCc.HasValue || cur.BestCc.Value.Cost > cc.Cost)
+            if (!(cur.BestCc?.Cost < cc.Cost))
                 cur.BestCc = cc;
         }
         if (_root.Sons.Count == 0)
