@@ -27,8 +27,8 @@ internal sealed record LayoutCfg(
 
     /// <summary> 解析数组为HashSet </summary>
     private static HashSet<char>[] Parse(TomlArray arr)
-        => [.. arr.Select(static obj
-            => obj is string str
+        => [.. arr.Select(
+            static obj => obj is string str
             ? str.ToHashSet()
             : throw new ArgumentException($"数组元素 '{obj}' 无效", nameof(arr)))];
 }

@@ -15,6 +15,8 @@ internal sealed class CcDict // Trie结构
     /// <summary> 将词库条目集构造为Trie </summary>
     public CcDict(IEnumerable<(string Word, CodeCost Cc)> entries) {
         foreach (var (word, cc) in entries) {
+            if (word.Length > MaxWordLen)
+                MaxWordLen = word.Length;
             var cur = _root;
             foreach (var c in word) {
                 ref var son = ref GetValueRefOrAddDefault(cur.Sons, c, out var exists);
@@ -29,17 +31,20 @@ internal sealed class CcDict // Trie结构
             throw new ArgumentException("词库条目集为空", nameof(entries));
     }
 
+    /// <summary> 最大词长：用于初始化最优CodeCost集 </summary>
+    public int MaxWordLen { get; private set; }
+
     /// <summary> 更新文本所有起始词的最优CodeCost集 </summary>
     /// <param name="text"> 待编码的文本 </param>
     /// <param name="bestCcs"> CodeCost集：索引=词长-1 </param>
-    /// <returns> 是否抵达文本末尾 </returns>
+    /// <returns> 文本是否还有未编码部分 </returns>
     public bool UpdateCcs(ReadOnlySpan<char> text, IList<CodeCost?> bestCcs) {
         bestCcs.Clear();
         var cur = _root;
         foreach (var c in text)
             if (cur.Sons.TryGetValue(c, out cur))
                 bestCcs.Add(cur.BestCc);
-            else return false;
-        return true;
+            else return true;
+        return false;
     }
 }
