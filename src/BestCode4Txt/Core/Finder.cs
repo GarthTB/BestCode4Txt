@@ -30,8 +30,8 @@ internal static class Finder
         // 各位置的最优编码及其开销，初始为null
         var roots = new CodeCost?[text.Length + 1];
         roots[0] = new("", 0); // 开头空串
-        // 最远编码索引
-        var front = 0;
+        // 最远编码末端索引
+        var furthest = 0;
         // 暂存最优路径以加速拼接
         StringBuilder route = new(text.Length * 2); // 设平均码长为2
         // 可复用的CodeCost集：索引=词长-1
@@ -42,7 +42,7 @@ internal static class Finder
             var cc1 = roots[i]!.Value;
 
             // 已无其他root：暂存前部，只留2字
-            if (i == front && cc1.Code.Length > 4) {
+            if (i == furthest && cc1.Code.Length > 4) {
                 _ = route.Append(cc1.Code, 0, cc1.Code.Length - 2);
                 cc1 = cc1 with { Code = cc1.Code[^2..] };
             }
@@ -73,6 +73,8 @@ internal static class Finder
             ref var tgt = ref roots[i];
             if (!tgt.HasValue || tgt.Value.Cost > cost)
                 tgt = new(getCode(), cost);
+            if (i > furthest)
+                furthest = i;
         }
     }
 
