@@ -66,7 +66,7 @@ internal sealed class Finder(CcDict dict, ILinker linker)
         // 取出root：一定可达
         var cc1 = _roots[_curIdx]!.Value;
         // 已无其他root：固化前部，只留2字
-        if (_curIdx == _maxIdx && cc1.Code.Length > 3) {
+        if (_curIdx == _maxIdx && cc1.Code.Length > 2) {
             _ = _route.Append(cc1.Code, 0, cc1.Code.Length - 2);
             cc1 = cc1 with { Code = cc1.Code[^2..] };
         }
