@@ -16,7 +16,7 @@ internal sealed class Finder(CcDict dict, ILinker linker)
     private string _text = "";
 
     /// <summary> 各位置的最优编码及其开销，初始为null </summary>
-    private CodeCost?[] _roots = [new()];
+    private CodeCost?[] _roots = [new("", 0)]; // 启动子
 
     /// <summary> 当前索引、最远编码末端索引 </summary>
     private int _curIdx, _maxIdx;
@@ -39,19 +39,16 @@ internal sealed class Finder(CcDict dict, ILinker linker)
             Console.Write($"\r第 {textLen} - {textLen += cnt} 字处理中...");
             // 取出余部
             var restText = _text[_curIdx..];
-            var restRoots = _roots[_curIdx..^1];
-            var maxLen = _maxIdx - _curIdx;
+            var restRoots = _roots[_curIdx..];
             // 加载新块
             _text = restText + new string(buf, 0, cnt);
-            _roots = [.. restRoots, .. new CodeCost?[cnt + 1]];
-            (_curIdx, _maxIdx) = (0, maxLen);
-            // 首个CodeCost
-            if (restRoots.Length == 0)
-                _roots[0] = new("", 0);
+            _roots = [.. restRoots, .. new CodeCost?[cnt]];
             // 循环处理
-            while (ProcCurIdx(true)) ;
+            for ((_curIdx, _maxIdx) = (0, _maxIdx - _curIdx);
+                ProcCurIdx(true);
+                _curIdx++) ;
         }
-        while (_curIdx < _text.Length)
+        for (; _curIdx < _text.Length; _curIdx++)
             _ = ProcCurIdx(false);
 
         Console.WriteLine($"\n处理完成，共 {textLen} 字。");
@@ -60,45 +57,40 @@ internal sealed class Finder(CcDict dict, ILinker linker)
     }
 
     /// <summary> 处理当前索引处的编码及其开销 </summary>
-    /// <param name="stopWhenReachEnd"> 是否在到达文本末端时停止 </param>
+    /// <param name="breakAtEnd"> 是否在到达文本末端时打断 </param>
     /// <returns> 文本是否还有未编码部分 </returns>
-    private bool ProcCurIdx(bool stopWhenReachEnd) {
+    private bool ProcCurIdx(bool breakAtEnd) {
         // 取出root：一定可达
         var cc1 = _roots[_curIdx]!.Value;
-        // 已无其他root：固化前部，只留2字
+        // 已无其他root：固化前部，只留2码
         if (_curIdx == _maxIdx && cc1.Code.Length > 2) {
             _ = _route.Append(cc1.Code, 0, cc1.Code.Length - 2);
             cc1 = cc1 with { Code = cc1.Code[^2..] };
         }
         // 获取文本所有起始词的最优CodeCost
-        if (stopWhenReachEnd && !dict.UpdateCcs(_text.AsSpan(_curIdx), _ccsByLen))
+        if (breakAtEnd && !dict.UpdateCcs(_text.AsSpan(_curIdx), _ccsByLen))
             return false;
         // 更新最优CodeCost
         for (var i = 0; i < _ccsByLen.Count; i++) {
             var cc2 = _ccsByLen[i];
             if (cc2.HasValue)
-                LinkUpdate(_curIdx + i + 1, cc1, cc2.Value);
+                LinkAndUpdate(_curIdx + i + 1, cc2.Value);
         }
         // 兜底：原字填入
         if (!_roots[_curIdx + 1].HasValue) {
             CodeCost cc2 = new(_text[_curIdx].ToString(), 0);
-            LinkUpdate(_curIdx + 1, cc1, cc2);
+            LinkAndUpdate(_curIdx + 1, cc2);
         }
-        _curIdx++;
         return true;
-    }
 
-    /// <summary> 拼接并更新词尾处的最优编码、_maxIdx </summary>
-    /// <param name="endIdx"> 词尾索引 </param>
-    /// <param name="cc1"> 前编码及其开销 </param>
-    /// <param name="cc2"> 后编码及其开销 </param>
-    private void LinkUpdate(int endIdx, CodeCost cc1, CodeCost cc2) {
-        var (cost, getCode) = linker.Link(cc1, cc2);
-        ref var tgt = ref _roots[endIdx];
-        if (!(tgt?.Cost <= cost)) {
-            tgt = new(getCode(), cost);
-            if (endIdx > _maxIdx)
-                _maxIdx = endIdx;
+        void LinkAndUpdate(int endIdx, CodeCost cc2) {
+            var cc = linker.Link(cc1, cc2);
+            ref var tgt = ref _roots[endIdx];
+            if (!(tgt?.Cost <= cc.Cost)) {
+                tgt = cc;
+                if (endIdx > _maxIdx)
+                    _maxIdx = endIdx;
+            }
         }
     }
 }

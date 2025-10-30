@@ -13,7 +13,7 @@ internal sealed class Jd6Linker(CostMap costs): ILinker
     private readonly HashSet<char> _ym
         = [.. "bcdefghjklmnpqrstwxyzBCDEFGHJKLMNPQRSTWXYZ"];
 
-    public (double Cost, Func<string> GetCode) Link(CodeCost cc1, CodeCost cc2) {
+    public CodeCost Link(CodeCost cc1, CodeCost cc2) {
         var (code1, cost1) = cc1;
         var (code2, cost2) = cc2;
         ArgumentException.ThrowIfNullOrEmpty(code2, nameof(cc2));
@@ -22,11 +22,13 @@ internal sealed class Jd6Linker(CostMap costs): ILinker
         if (code2.Length < 4 && _ym.Contains(code2[^1])) {
             code2 += ' ';
             cost2 += costs[code2[^1], ' '];
+            // 2. 前码为空：返回尾部
+            if (code1.Length == 0)
+                return new(code2, cost2);
         }
-
         // 2. 前码为空：直接返回尾部
         if (code1.Length == 0)
-            return (cost2, () => code2);
+            return cc2;
 
         var code1L = code1[^1];
         var code2F = code2[0];
@@ -56,6 +58,6 @@ internal sealed class Jd6Linker(CostMap costs): ILinker
 
         var gap = costs[code1[^1], code2F]; // code有变，不能用code1L
         var cost = cost1 + gap + cost2;
-        return (cost, () => code1 + code2);
+        return new(code1 + code2, cost);
     }
 }
