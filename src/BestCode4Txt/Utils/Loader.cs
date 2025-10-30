@@ -34,21 +34,20 @@ internal static class Loader
             .Where(static x => x.Item1.Length > 0 && x.Item2.Length > 0)
             .OrderByDescending(static x => x.Item3) // 权重降序
             .ThenBy(static x => x.Item2.Length) // 码长升序
+            .ThenBy(x => costs.GetCost(x.Item2)) // 临时开销升序
             .Select(x => {
                 var (word, code, _) = x;
-                var soleCode = GetSoleCode(code);
-                var cost = costs.GetCost(soleCode);
-                return (word, new CodeCost(soleCode, cost));
+                DistinctCode(ref code);
+                var cost = costs.GetCost(code);
+                return (word, new CodeCost(code, cost));
             });
         return new(entries);
 
-        string GetSoleCode(string code) {
-            var sole = code;
-            for (var (root, i) = (code, 2); !usedCodes.Add(sole);)
-                (sole, i) = i < 10
+        void DistinctCode(ref string code) {
+            for (var (root, i) = (code, 2); !usedCodes.Add(code);)
+                (code, i) = i < 10
                     ? (root + i, i + 1) // 不到10：数字选重
                     : ((root += '=') + ' ', 2); // 到10：=翻页、空格首选
-            return sole;
         }
     }
 }
