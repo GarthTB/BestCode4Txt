@@ -27,7 +27,7 @@ internal sealed class CcDict // Trie结构
             if (!(cur.BestCc?.Cost <= cc.Cost))
                 cur.BestCc = cc;
         }
-        if (_root.Sons.Count == 0)
+        if (_root.Sons.Count == 0 && !_root.BestCc.HasValue)
             throw new ArgumentException("词库条目集为空", nameof(entries));
     }
 
@@ -36,15 +36,15 @@ internal sealed class CcDict // Trie结构
 
     /// <summary> 更新文本所有起始词的最优CodeCost集 </summary>
     /// <param name="text"> 待编码的文本 </param>
-    /// <param name="bestCcs"> CodeCost集：索引=词长-1 </param>
-    /// <returns> 文本是否还有未编码部分 </returns>
-    public bool UpdateCcs(ReadOnlySpan<char> text, IList<CodeCost?> bestCcs) {
-        bestCcs.Clear();
+    /// <param name="ccs"> CodeCost集：索引=词长-1 </param>
+    /// <returns> 是否需要加载下一块文本 </returns>
+    public bool UpdateCcs(ReadOnlySpan<char> text, IList<CodeCost?> ccs) {
+        ccs.Clear();
         var cur = _root;
         foreach (var c in text)
             if (cur.Sons.TryGetValue(c, out cur))
-                bestCcs.Add(cur.BestCc);
-            else return true;
-        return false;
+                ccs.Add(cur.BestCc);
+            else return false;
+        return true;
     }
 }

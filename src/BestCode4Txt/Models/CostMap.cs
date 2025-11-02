@@ -1,12 +1,10 @@
-using static System.Runtime.InteropServices.CollectionsMarshal;
-
 namespace BestCode4Txt.Models;
 
 /// <summary> 键对-开销表 </summary>
 internal sealed class CostMap
 {
     /// <summary> 开销表：键为键对，值为开销 </summary>
-    private readonly Dictionary<(char C1, char C2), double> _costs = new(4096);
+    private readonly Dictionary<(char C1, char C2), double> _costs = new(2116); // 默认46键
 
     /// <summary> 开销均值：作为缺省 </summary>
     private readonly double _mean;
@@ -19,10 +17,8 @@ internal sealed class CostMap
         var sum = 0d;
         foreach (var (c1, c2, cost) in costs) {
             sum += cost;
-            ref var val = ref GetValueRefOrAddDefault(_costs, (c1, c2), out var exists);
-            val = exists
-                ? throw new ArgumentException($"'{c1}{c2}' 的开销重复", nameof(costs))
-                : cost;
+            if (!_costs.TryAdd((c1, c2), cost))
+                throw new ArgumentException($"'{c1}{c2}' 的开销重复", nameof(costs));
         }
         if (_costs.Count == 0)
             throw new ArgumentException("键对-开销集为空", nameof(costs));

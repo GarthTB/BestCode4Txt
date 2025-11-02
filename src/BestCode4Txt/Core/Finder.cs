@@ -68,7 +68,7 @@ internal sealed class Finder(CcDict dict, ILinker linker)
             cc1 = cc1 with { Code = cc1.Code[^2..] };
         }
         // 获取文本所有起始词的最优CodeCost
-        if (breakAtEnd && !dict.UpdateCcs(_text.AsSpan(_curIdx), _ccsByLen))
+        if (breakAtEnd && dict.UpdateCcs(_text.AsSpan(_curIdx), _ccsByLen))
             return false;
         // 更新最优CodeCost
         for (var i = 0; i < _ccsByLen.Count; i++) {

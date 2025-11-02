@@ -20,23 +20,23 @@ internal static class Loader
     public static CcDict LoadDict(string path, CostMap costs) {
         HashSet<string> usedCodes = [];
         var entries = File.ReadLines(path)
-            .Select(static line => {
+            .Select(line => {
                 var idx = line.IndexOf('#');
                 var bare = idx < 0 ? line : line[..idx];
                 var parts = bare.Split('\t');
                 return parts.Length switch {
-                    2 => (parts[0], parts[1], 0d),
-                    3 when double.TryParse(parts[2], out var cost)
-                        => (parts[0], parts[1], cost),
-                    _ => ("", "", 0d)
+                    2 => (parts[0], parts[1], costs.GetCost(parts[1]), 0d),
+                    3 when double.TryParse(parts[2], out var weight)
+                        => (parts[0], parts[1], costs.GetCost(parts[1]), weight),
+                    _ => ("", "", 0d, 0d)
                 };
             })
             .Where(static x => x.Item1.Length > 0 && x.Item2.Length > 0)
-            .OrderByDescending(static x => x.Item3) // 权重降序
+            .OrderByDescending(static x => x.Item4) // 权重降序
             .ThenBy(static x => x.Item2.Length) // 码长升序
-            .ThenBy(x => costs.GetCost(x.Item2)) // 临时开销升序
+            .ThenBy(static x => x.Item3) // 临时开销升序
             .Select(x => {
-                var (word, code, _) = x;
+                var (word, code, _, _) = x;
                 DistinctCode(ref code);
                 var cost = costs.GetCost(code);
                 return (word, new CodeCost(code, cost));
