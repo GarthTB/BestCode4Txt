@@ -1,7 +1,5 @@
 using BestCode4Txt.Config;
 using BestCode4Txt.Core;
-using BestCode4Txt.Linker;
-using BestCode4Txt.Utils;
 using static System.Console;
 
 try {
@@ -11,7 +9,7 @@ try {
     WriteLine("仓库: https://github.com/GarthTB/BestCode4Txt");
 
     WriteLine("加载配置...");
-    var cfg = MainCfg.Load("Config.toml");
+    var cfg = Cfg.Load("Config.toml");
     var costs = Loader.LoadCosts(cfg.CostsPath);
     var dict = Loader.LoadDict(cfg.DictPath, costs);
     var linker = LinkerFactory.Create(cfg.Strat, costs);
