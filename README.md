@@ -82,6 +82,10 @@ layout_path = "Cfg/Layout.toml"
 
 ## 📝 更新日志
 
+### v1.1.0 (20251106)
+
+- 迁移至[新仓库](https://github.com/GarthTB/InputEncoderDP)
+
 ### v1.0.0 (20251030)
 
 - 首个发布！
